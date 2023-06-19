@@ -1,0 +1,84 @@
+version: "3.9"
+services:
+  mongo_db:
+    container_name: campus_pay
+    image: mongo:latest
+    restart: always
+    ports:
+      - "2717:27017"
+    volumes:
+      - mongo_db:/data/db
+    networks:
+      - campus_pay-server
+
+  redis:
+    container_name: campus_pay-redis
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - campus_pay-server
+
+  api:
+    build: .
+    image: lekejosh/campus_pay
+    restart: always
+    hostname: campus_pay-server
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "${PORT}:${PORT}"
+      - "${HTTPS_PORT}:${HTTPS_PORT}"
+    networks:
+      - campus_pay-server
+    environment:
+      ACCESS_TOKEN_EXPIRE: "${ACCESS_TOKEN_EXPIRE}"
+      ACCESS_TOKEN_SECRET: "${ACCESS_TOKEN_SECRET}"
+      REFRESH_TOKEN_EXPIRE: "${REFRESH_TOKEN_EXPIRE}"
+      REFRESH_TOKEN_SECRET: "${REFRESH_TOKEN_SECRET}"
+      PORT: "${PORT}"
+      DB_URI: "${DB_URI}"
+      DB_NAME: campus_pay
+      SMPT_SERVICE: "${SMPT_SERVICE}"
+      SMPT_HOST: "${SMPT_HOST}"
+      SMPT_PORT: "${SMPT_PORT}"
+      SMPT_MAIL: "${SMPT_MAIL}"
+      SMPT_PASSWORD: "${SMPT_PASSWORD}"
+      CLOUDINARY_NAME: "${CLOUDINARY_NAME}"
+      CLOUDINARY_APIKEY: "${CLOUDINARY_APIKEY}"
+      CLOUDINARY_SECRET: "${CLOUDINARY_SECRET}"
+      DOCKER: "true"
+      HTTPS_PORT: "${HTTPS_PORT}"
+      REDIS_PORT: "${REDIS_PORT}"
+      REDIS_HOST: "${REDIS_HOST}"
+    depends_on:
+      - mongo_db
+      - redis
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx
+    environment:
+      NGINX_HTTP_PORT: "${NGINX_HTTP_PORT}"
+      NGINX_HTTPS_PORT: "${NGINX_HTTPS_PORT}"
+
+    hostname: nginx
+    ports:
+      - "${NGINX_HTTP_PORT}:80"
+      - "${NGINX_HTTPS_PORT}:443"
+
+    depends_on:
+      - api
+    networks:
+      - campus_pay-server
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+volumes:
+  mongo_db: {}
+
+networks:
+  campus_pay-server:
+    external: true

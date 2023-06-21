@@ -6,11 +6,10 @@
 const app = require("./app");
 const mongoose = require("mongoose");
 const cloudinary = require("cloudinary");
-const { key, cert } = require("./certificates");
+const { key, cert, csr } = require("./certificates");
 const https = require("https");
 const http = require("http");
 require("dotenv").config();
-require("./utils/auth");
 
 process.on("uncaughtException", (err) => {
   console.log(`Error: $err: ${err.message}`);
@@ -46,7 +45,7 @@ mongoose
     });
 
     // Create an HTTPS server
-    const httpsServer = https.createServer({ key, cert }, app);
+    const httpsServer = https.createServer({ key, cert, csr }, app);
     httpsServer.listen(process.env.HTTPS_PORT, () => {
       console.log(
         `HTTPS Server is working on https://localhost:${process.env.HTTPS_PORT}`

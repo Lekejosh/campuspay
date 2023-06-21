@@ -9,7 +9,7 @@ services:
     volumes:
       - mongo_db:/data/db
     networks:
-      - campus_pay-server
+      - campuspayserver
 
   redis:
     container_name: campus_pay-redis
@@ -18,20 +18,20 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - campus_pay-server
+      - campuspayserver
 
   api:
     build: .
     image: lekejosh/campus_pay
     restart: always
-    hostname: campus_pay-server
+    hostname: campuspayserver
     volumes:
       - .:/usr/src/app
     ports:
       - "${PORT}:${PORT}"
       - "${HTTPS_PORT}:${HTTPS_PORT}"
     networks:
-      - campus_pay-server
+      - campuspayserver
     environment:
       ACCESS_TOKEN_EXPIRE: "${ACCESS_TOKEN_EXPIRE}"
       ACCESS_TOKEN_SECRET: "${ACCESS_TOKEN_SECRET}"
@@ -59,7 +59,7 @@ services:
   nginx:
     build:
       context: ./nginx
-    container_name: nginx
+    container_name: campus_pay-nginx
     environment:
       NGINX_HTTP_PORT: "${NGINX_HTTP_PORT}"
       NGINX_HTTPS_PORT: "${NGINX_HTTPS_PORT}"
@@ -72,13 +72,13 @@ services:
     depends_on:
       - api
     networks:
-      - campus_pay-server
+      - campuspayserver
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/default.conf:/etc/nginxx/conf.d/default.conf
 
 volumes:
   mongo_db: {}
 
 networks:
-  campus_pay-server:
+  campuspayserver:
     external: true

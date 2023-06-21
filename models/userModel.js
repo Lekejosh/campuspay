@@ -62,13 +62,23 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "seller", "admin",'student','staff'],
+      enum: ["user", "seller", "admin", "student", "staff"],
       default: "user",
+    },
+    idNumber: {
+      type: String,
+    },
+    university: {
+      type: String,
     },
     generatedOtp: String,
     generatedOtpExpire: Date,
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    isDeactivated: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

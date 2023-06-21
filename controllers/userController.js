@@ -6,6 +6,7 @@ const sendEmail = require("../utils/sendMail");
 const cache = require("../utils/cache");
 const { generateOTP } = require("../utils/otpGenerator");
 const cloudinary = require("cloudinary");
+const crypto = require("crypto");
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   const {
@@ -136,7 +137,7 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
       { mobileNumber: emailUserMobile },
       { username: emailUserMobile },
     ],
-  }).select("+password")
+  }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler("Invalid Credentials", 401));
@@ -199,7 +200,6 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
 
   if (nationality) {
     user.nationality = nationality;
- 
   }
   if (dob) {
     user.dob = dob;
@@ -212,21 +212,155 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getMe = catchAsyncErrors(async (req, res, next) => {
-//   const cachedUser = await cache.get(req.user._id);
+  //   const cachedUser = await cache.get(req.user._id);
 
-//   if (cachedUser) {
-//     const userData = JSON.parse(cachedUser);
-//     return res.status(200).json(userData);
-//   }
+  //   if (cachedUser) {
+  //     const userData = JSON.parse(cachedUser);
+  //     return res.status(200).json(userData);
+  //   }
 
   const user = await User.findById(req.user._id);
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
 
- 
-
-//   cache.set(req.user._id, userData);
+  //   cache.set(req.user._id, userData);
 
   res.status(200).json({ success: true, user });
 });
+exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
+  const { emailUserMobile } = req.body;
+
+  if (!emailUserMobile)
+    return next(
+      new ErrorHandler("Please Provide Email/Mobile Number/Username", 400)
+    );
+
+  const user = await User.findOne({
+    $or: [
+      { email: emailUserMobile },
+      { mobileNumber: emailUserMobile },
+      { username: emailUserMobile },
+    ],
+  });
+
+  if (!user) {
+    return next(new ErrorHandler("User Not found", 404));
+  }
+
+  if (user.isDeactivated) {
+    return next(new ErrorHandler("Account Deactivated, Contact Support", 403));
+  }
+
+  const resetToken = user.getResetPasswordToken();
+  user.save({ ValidateBeforeSave: false });
+
+  const resetPasswordUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/password/reset/${resetToken}`;
+
+  const message = `Your password reset Token is :-\n\n ${resetPasswordUrl} \n\nif you have not requested this email then, please Ignore it`;
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: `User Password Recovery`,
+      html: message,
+    });
+  } catch (error) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save({ validateBeforeSave: false });
+    return next(new ErrorHandler(error.message, 500));
+  }
+  res
+    .status(200)
+    .json({ success: true, message: "Reset Link Sent, Check your Mail!" });
+});
+
+exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  if (!req.body.newPassword || !req.body.confirmPassword) {
+    return next(new ErrorHandler("Credentials not provided", 422));
+  }
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new ErrorHandler("Reset Password Token is invalid", 401));
+  }
+
+  if (req.body.newPassword !== req.body.confirmPassword) {
+    return next(new ErrorHandler("Password does not Match", 400));
+  }
+  const message = `Your password has been changed successfully`;
+  await sendEmail({
+    email: user.email,
+    subject: `Password Changed Successfully`,
+    html: message,
+  });
+  user.password = req.body.newPassword;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+
+  await user.save();
+  res
+    .status(200)
+    .json({ success: true, message: "Password Changed Successfully" });
+});
+exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    return next(new ErrorHandler("All Credentials not Provided"));
+  }
+
+  const user = await User.findById(req.user.id).select("+password");
+  const isPasswordMatched = await user.comparePassword(oldPassword);
+
+  if (!isPasswordMatched)
+    return next(new ErrorHandler("Current Password is wrong!!!", 400));
+
+  if (newPassword !== confirmPassword)
+    return next(
+      new ErrorHandler("New Password and Confirm Password does not match", 400)
+    );
+
+  user.password = newPassword;
+  user.save();
+
+  res
+    .status(200)
+    .json({ success: true, message: "Password Update Successfully" });
+});
+
+exports.updateRoleToStudentOrStaff = catchAsyncErrors(
+  async (req, res, next) => {
+    const { role,idNumber,university } = req.body;
+
+    if (!role || !idNumber || !university) {
+      return next(new ErrorHandler("Required Credentials not provided", 422));
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+    user.role = role;
+    user.idNumber = idNumber;
+    user.university = university;
+    await user.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "User updated successfully" });
+  }
+);

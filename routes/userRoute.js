@@ -10,10 +10,14 @@ const {
   changeUsername,
   getMe,
   updateProfile,
+  forgotPassword,
+  resetPassword,
+  updatePassword,
+  updateRoleToStudentOrStaff,
 } = require("../controllers/userController");
 
 const { isAuthenticatedUser, deactivated } = require("../middlewares/auth");
-const { route } = require("../app");
+
 
 router.route("/").post(registerUser);
 router.route("/login").post(loginUser);
@@ -30,4 +34,12 @@ router
   .route("/me")
   .get(isAuthenticatedUser, deactivated, getMe)
   .put(isAuthenticatedUser, deactivated, updateProfile);
+
+router.route('/password/forgot').get(forgotPassword)
+router.route('/password/reset/:token').put(resetPassword)
+router
+  .route("/update/password")
+  .put(isAuthenticatedUser, deactivated, updatePassword);
+
+router.route("/update/role").put(isAuthenticatedUser,deactivated,updateRoleToStudentOrStaff)
 module.exports = router;

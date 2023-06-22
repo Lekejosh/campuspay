@@ -1,10 +1,16 @@
 # Plan
 
-- User Authentication and Security
-- Database Design and Management:
-- Payment Gateway Integration
+### User Authentication and Security
+
+- Create Account
+- Edit User Account
+- Update Role
+
+### Database Design and Management
+
 - Communication and Notifications
 - Transaction Management and History
+- Payment Gateway Integration
 - Coin generation and discount system
 - User Interface
 - Digital Wallet

@@ -15,7 +15,7 @@ const postSchema = new mongoose.Schema({
   ],
   description: {
     type: String,
-    maxLength: [300, "Description can't be more than 300 Characters"],
+    maxLength: [1000, "Description can't be more than 1000 Characters"],
   },
   price: {
     type: Number,
@@ -79,7 +79,8 @@ const postSchema = new mongoose.Schema({
     ref:"User"
   },
   isNegotiatable:{
-    type:String,
+    type:Boolean,
+    default:false
   }
 });
 

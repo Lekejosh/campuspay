@@ -15,21 +15,23 @@ const {
 
 const { isAuthenticatedUser, authorizeRole } = require("../middlewares/auth");
 
-router.route("/").post(
-  isAuthenticatedUser,
-  upload.array("images", 5),
-  authorizeRole("student", "staff"),
-  createPost
-);
+router
+  .route("/")
+  .post(
+    isAuthenticatedUser,
+    upload.array("images", 5),
+    authorizeRole("student", "staff"),
+    createPost
+  );
 
-router.route('/:postId').get(isAuthenticatedUser,getPost)
+router.route("/:postId").get(isAuthenticatedUser, getPost);
 router
   .route("/edit/:postId")
   .delete(isAuthenticatedUser, authorizeRole("student", "staff"), deletePost);
 router
   .route("/like/:postId")
-  .put(isAuthenticatedUser, authorizeRole("student", "staff"), likePost)
-  .delete(isAuthenticatedUser, authorizeRole("student", "staff"), unlikePost);
+  .put(isAuthenticatedUser, likePost)
+  .delete(isAuthenticatedUser, unlikePost);
 
 router
   .route("/review/:postId")

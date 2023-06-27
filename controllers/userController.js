@@ -1,6 +1,6 @@
 const User = require("../models/userModel");
 const catchAsyncErrors = require("../middlewares/catchAsyncErrors");
-const Post = require('../models/postModel')
+const Post = require("../models/postModel");
 const ErrorHandler = require("../utils/errorHandler");
 const sendToken = require("../utils/jwtToken");
 const sendEmail = require("../utils/sendMail");
@@ -8,7 +8,9 @@ const cache = require("../utils/cache");
 const { generateOTP } = require("../utils/otpGenerator");
 const cloudinary = require("cloudinary");
 const crypto = require("crypto");
-
+const Wishlist = require("../models/wishListModel");
+const Notification = require("../models/notificationModel");
+const Order = require("../models/orderModel");
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   const {
     fullName,
@@ -50,19 +52,19 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     generatedOtp: generateOTP(),
     generatedOtpExpire: Date.now() + 15 * 60 * 1000,
   });
-  try {
-    const data = `Your email Verification Token is :-\n]n ${user.generatedOtp} (This is only available for 15Minutes!)\n\nIf you have not requested this email then, please Ignore it`;
-    await sendEmail({
-      email: `${user.username} <${user.email}>`,
-      subject: "Verify Account",
-      html: data,
-    });
-  } catch (error) {
-    user.generatedOTP = undefined;
-    (user.generatedOtpExpire = undefined),
-      await user.save({ validateBeforeSave: false });
-    return next(new ErrorHandler(error.message, 500));
-  }
+  // try {
+  //   const data = `Your email Verification Token is :-\n]n ${user.generatedOtp} (This is only available for 15Minutes!)\n\nIf you have not requested this email then, please Ignore it`;
+  //   await sendEmail({
+  //     email: `${user.username} <${user.email}>`,
+  //     subject: "Verify Account",
+  //     html: data,
+  //   });
+  // } catch (error) {
+  //   user.generatedOTP = undefined;
+  //   (user.generatedOtpExpire = undefined),
+  //     await user.save({ validateBeforeSave: false });
+  //   return next(new ErrorHandler(error.message, 500));
+  // }
   user.getAccessToken();
   sendToken(user, 201, res);
 });
@@ -344,7 +346,7 @@ exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
 
 exports.updateRoleToStudentOrStaff = catchAsyncErrors(
   async (req, res, next) => {
-    const { role,idNumber,university } = req.body;
+    const { role, idNumber, university } = req.body;
 
     if (!role || !idNumber || !university) {
       return next(new ErrorHandler("Required Credentials not provided", 422));
@@ -365,3 +367,23 @@ exports.updateRoleToStudentOrStaff = catchAsyncErrors(
       .json({ success: true, message: "User updated successfully" });
   }
 );
+exports.deleteAccount = catchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    return next(new ErrorHandler("User Not found", 404));
+  }
+
+  await Wishlist.deleteMany({ user: req.user._id });
+  await Notification.deleteMany({ userId: req.user._id });
+  await Post.deleteMany({ author: req.user._id });
+  await Order.deleteMany({ user: req.user._id });
+
+  await user.deleteOne();
+
+  res.clearCookie("cookie", {
+    httpOnly: true,
+  });
+
+  res.status(204).end();
+});

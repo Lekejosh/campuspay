@@ -31,7 +31,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(limiter);
+// app.use(limiter);
 
 app.use(
   session({
@@ -64,10 +64,12 @@ app.get("/", (req, res) => {
 const user = require("./routes/userRoute");
 const post = require("./routes/postRoute");
 const wishlist = require("./routes/wishListRoute");
+const order = require("./routes/orderRoute");
 
 app.use("/api/v1/user", user);
 app.use("/api/v1/post", post);
 app.use("/api/v1/wishlist", wishlist);
+app.use("/api/v1/order", order);
 
 app.use(errorMiddleware);
 

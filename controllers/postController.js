@@ -40,7 +40,7 @@ exports.createPost = catchAsyncErrors(async (req, res, next) => {
 exports.getPost = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId !== ":postId")
+  if (!postId || postId === ':postId')
     return next(new ErrorHandler("Post Id not specified", 422));
 
   const post = await Post.findById(postId);
@@ -55,7 +55,7 @@ exports.getPost = catchAsyncErrors(async (req, res, next) => {
 exports.deletePost = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId !== ":postId")
+  if (!postId || postId === ':postId')
     return next(new ErrorHandler("Post Id not specified", 422));
 
   const post = await Post.findById(postId);
@@ -136,7 +136,7 @@ exports.likePost = catchAsyncErrors(async (req, res, next) => {
 exports.unlikePost = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId !== ":postId")
+  if (!postId || postId === ':postId')
     return next(new ErrorHandler("Post Id not specified", 422));
 
   const post = await Post.findById(postId);
@@ -160,7 +160,7 @@ exports.unlikePost = catchAsyncErrors(async (req, res, next) => {
 exports.createPostReview = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId !== ":postId")
+  if (!postId || postId === ':postId')
     return next(new ErrorHandler("Post Id not specified", 422));
   const { rating, comment } = req.body;
 
@@ -214,7 +214,7 @@ exports.createPostReview = catchAsyncErrors(async (req, res, next) => {
 exports.getPostReviews = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId !== ":postId")
+  if (!postId || postId === ':postId')
     return next(new ErrorHandler("Post Id not specified", 422));
   const post = await Post.findById(postId);
 
@@ -231,7 +231,7 @@ exports.getPostReviews = catchAsyncErrors(async (req, res, next) => {
 exports.deletePostReview = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
   const reviewId = req.query.review;
-  if (!postId !== ":postId")
+  if (!postId || postId === ':postId')
     return next(new ErrorHandler("Post Id not specified", 422));
 
   const post = await Post.findById(postId);

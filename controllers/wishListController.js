@@ -18,7 +18,12 @@ exports.getWishlist = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Wish List Id not specified", 422));
   }
 
-  const wishlist = await Wishlist.findById(wishlistId).populate("items");
+  const wishlist = await Wishlist.findById(wishlistId).populate({
+    path: "items.item",
+    populate: {
+      path: "author",
+    },
+  });
 
   res.status(200).json({ success: true, wishlist });
 });

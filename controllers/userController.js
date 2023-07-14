@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 const catchAsyncErrors = require("../middlewares/catchAsyncErrors");
 const Post = require("../models/postModel");
 const ErrorHandler = require("../utils/errorHandler");
-const sendToken = require("../utils/jwtToken");
+const { sendToken, extendedToken } = require("../utils/jwtToken");
 const sendEmail = require("../utils/sendMail");
 const cache = require("../utils/cache");
 const { generateOTP } = require("../utils/otpGenerator");
@@ -129,7 +129,7 @@ exports.resendOtp = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.loginUser = catchAsyncErrors(async (req, res, next) => {
-  const { emailUserMobile, password } = req.body;
+  const { emailUserMobile, password, rememberMe } = req.body;
   if (!emailUserMobile || !password) {
     return next(new ErrorHandler("Credentials not provided", 422));
   }
@@ -152,6 +152,10 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
   }
 
   user.getAccessToken();
+
+  if (rememberMe) {
+    return extendedToken(user, 200, res);
+  }
 
   sendToken(user, 200, res);
 });

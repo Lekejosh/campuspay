@@ -11,6 +11,7 @@ const crypto = require("crypto");
 const Wishlist = require("../models/wishListModel");
 const Notification = require("../models/notificationModel");
 const Order = require("../models/orderModel");
+const axios = require("axios");
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   const {
     fullName,
@@ -371,6 +372,33 @@ exports.updateRoleToStudentOrStaff = catchAsyncErrors(
       .json({ success: true, message: "User updated successfully" });
   }
 );
+
+//TODO: Wait for sandbox to fix there API before proceeding
+
+exports.bvn = catchAsyncErrors(async (req, res, next) => {
+  const { number } = req.body;
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  await axios
+    .post(
+      `${process.env.BVN_API}bvnr/GetSingleBVN`,
+      { number },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Sandbox-key": process.env.SANDBOX_API_KEY,
+          Accept: "application/json",
+        },
+      }
+    )
+    .then((res) => {
+      return res.json(res);
+    });
+});
+
 exports.deleteAccount = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findById(req.user._id);
 

@@ -71,6 +71,15 @@ const userSchema = new mongoose.Schema(
     university: {
       type: String,
     },
+    bvn: {
+      number: {
+        type: String,
+        unique: true,
+        minLength: [11, "BVN Number can't be less than 11 digits"],
+        maxLength: [11, "BVN Number can't be more than 11 digits"],
+      },
+      isVerified: { type: Boolean },
+    },
     generatedOtp: String,
     generatedOtpExpire: Date,
     resetPasswordToken: String,

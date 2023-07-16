@@ -65,11 +65,13 @@ const user = require("./routes/userRoute");
 const post = require("./routes/postRoute");
 const wishlist = require("./routes/wishListRoute");
 const order = require("./routes/orderRoute");
+const wallet = require("./routes/walletRoute");
 
 app.use("/api/v1/user", user);
 app.use("/api/v1/post", post);
 app.use("/api/v1/wishlist", wishlist);
 app.use("/api/v1/order", order);
+app.use("/api/v1/wallet", wallet);
 
 app.use(errorMiddleware);
 

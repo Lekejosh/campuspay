@@ -50,6 +50,7 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     gender,
     mobileNumber,
     nationality,
+    transactionPin:1234,
     generatedOtp: generateOTP(),
     generatedOtpExpire: Date.now() + 15 * 60 * 1000,
   });

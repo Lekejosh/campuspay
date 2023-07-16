@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const walletSchema = new mongoose.Schema(
   {
     _id: {
@@ -38,8 +40,10 @@ const walletSchema = new mongoose.Schema(
         },
       },
     ],
+ 
   },
   { timestamps: true }
 );
+
 
 module.exports = mongoose.model("Wallet", walletSchema);

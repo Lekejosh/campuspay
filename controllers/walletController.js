@@ -84,7 +84,7 @@ exports.deleteWallet = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.transferToWallet = catchAsyncErrors(async (req, res, next) => {
-  const { from, to, amount } = req.body;
+  const { from, to, amount, pin } = req.body;
 
   if (!from || !to || !amount) {
     return next(new ErrorHandler("Required parameters not provided", 422));
@@ -104,6 +104,15 @@ exports.transferToWallet = catchAsyncErrors(async (req, res, next) => {
 
   if (walletFrom.userId._id.toString() !== req.user._id.toString()) {
     return next(new ErrorHandler("Unauthorized Transaction", 403));
+  }
+
+  const user = await User.findById(req.user._id).select("+transactionPin");
+  console.log(user);
+
+  const isPinMatched = await user.compareTransactionPin(pin);
+
+  if (!isPinMatched) {
+    return next(new ErrorHandler("Pin not correct", 403));
   }
 
   if (walletFrom.currency !== walletTo.currency) {
@@ -162,3 +171,5 @@ exports.transferToWallet = catchAsyncErrors(async (req, res, next) => {
     message: "Transfer successful",
   });
 });
+
+exports.depositIntoWallet = catchAsyncErrors(async (req, res, next) => {});

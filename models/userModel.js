@@ -80,6 +80,11 @@ const userSchema = new mongoose.Schema(
       },
       isVerified: { type: Boolean },
     },
+    transactionPin: {
+      select: false,
+      type: String,
+      minLength: [4, "Pin cannot be less than 4 Numbers"],
+    },
     generatedOtp: String,
     generatedOtpExpire: Date,
     resetPasswordToken: String,
@@ -121,5 +126,16 @@ userSchema.methods.getResetPasswordToken = function () {
 
   this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
   return resetToken;
+};
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("transactionPin")) {
+    next();
+  }
+  this.transactionPin = await bcrypt.hash(this.transactionPin, 10);
+});
+userSchema.methods.compareTransactionPin = async function (
+  enteredTransactionPin
+) {
+  return await bcrypt.compare(enteredTransactionPin, this.transactionPin);
 };
 module.exports = mongoose.model("User", userSchema);

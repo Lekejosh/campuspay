@@ -13,10 +13,25 @@ exports.createWallet = catchAsyncErrors(async (req, res, next) => {
   }
 
   const { currency } = req.body;
+  const currencyPrefixes = {
+    NGN: "01",
+    USD: "02",
+    GBP: "03",
+  };
+
+  if (!currencyPrefixes[currency]) {
+    return next(new ErrorHandler("Invalid currency code", 400));
+  }
+
+  const accountNumber = Math.floor(10000000 + Math.random() * 90000000);
+
+
+  const formattedAccountNumber = currencyPrefixes[currency] + accountNumber;
 
   const wallet = await Wallet.create({
     userId: req.user._id,
     currency: currency,
+    accountNumber: formattedAccountNumber,
     history: { content: `You created this ${currency} wallet` },
   });
 
@@ -36,13 +51,13 @@ exports.createWallet = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getWallet = catchAsyncErrors(async (req, res, next) => {
-  const { walletId } = req.params;
+  const { accountNumber } = req.params;
 
-  if (!walletId) {
-    return next(new ErrorHandler("Wallet Id not provided", 422));
+  if (!accountNumber) {
+    return next(new ErrorHandler("Account Number not provided", 422));
   }
 
-  const wallet = await Wallet.findById(walletId);
+  const wallet = await Wallet.findOne({ accountNumber: accountNumber });
 
   if (!wallet) {
     return next(new ErrorHandler("Wallet not found", 404));
@@ -58,12 +73,12 @@ exports.getAllWallet = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.deleteWallet = catchAsyncErrors(async (req, res, next) => {
-  const { walletId } = req.params;
-  if (!walletId) {
-    return next(new ErrorHandler("Wallet Id not provided", 422));
+  const { accountNumber } = req.params;
+  if (!accountNumber) {
+    return next(new ErrorHandler("Account Number not provided", 422));
   }
 
-  const wallet = await Wallet.findById(walletId);
+  const wallet = await Wallet.findOne({ accountNumber: accountNumber });
 
   if (!wallet) {
     return next(new ErrorHandler("Wallet not found", 404));
@@ -90,13 +105,16 @@ exports.transferToWallet = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Required parameters not provided", 422));
   }
 
-  const walletFrom = await Wallet.findById(from).populate("userId", "username");
+  const walletFrom = await Wallet.findOne({accountNumber:from}).populate("userId", "username");
 
   if (!walletFrom) {
     return next(new ErrorHandler("Sender Wallet not found", 404));
   }
 
-  const walletTo = await Wallet.findById(to).populate("userId", "username");
+  const walletTo = await Wallet.findOne({ accountNumber: to }).populate(
+    "userId",
+    "username"
+  );
 
   if (!walletTo) {
     return next(new ErrorHandler("Receiver Wallet not found", 404));
@@ -173,21 +191,21 @@ exports.transferToWallet = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.depositIntoWallet = catchAsyncErrors(async (req, res, next) => {
-  const { amount, walletId } = req.body;
+  const { amount, accountNumber } = req.body;
 
-  if (!amount || !walletId) {
+  if (!amount || !accountNumber) {
     return next(new ErrorHandler("Required Paramater not provided", 422));
   }
 
-  const wallet = await Wallet.findById(walletId);
+  const wallet = await Wallet.findOne({accountNumber:accountNumber});
 
   if (!wallet) {
     return next(new ErrorHandler("Wallet not found", 404));
   }
 
   wallet.balance += amount;
-  walletTo.history.push({
-    content: `Deposited ${amount}`,
+  wallet.history.push({
+    content: `Deposited ${amount} into ${wallet.accountNumber}`,
   });
   await wallet.save();
 

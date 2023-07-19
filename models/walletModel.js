@@ -20,6 +20,9 @@ const walletSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    accountNumber: {
+      type: String,
+    },
     history: [
       {
         _id: {
@@ -38,10 +41,8 @@ const walletSchema = new mongoose.Schema(
         },
       },
     ],
- 
   },
   { timestamps: true }
 );
-
 
 module.exports = mongoose.model("Wallet", walletSchema);

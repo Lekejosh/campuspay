@@ -380,9 +380,22 @@ exports.bvn = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("BVN number not provided", 422));
   }
   try {
-    const user = await User.findById(req.user._id);
+    const existingBVN = await User.findOne({
+      "bvn.number": number,
+      _id: { $ne: req.user._id },
+    });
+    if (existingBVN) {
+      return next(
+        new ErrorHandler("This BVN is already used by another User", 409)
+      );
+    }
+    const user = await User.findById(req.user._id)
     if (!user) {
       return res.status(404).json({ error: "User not found" });
+    }
+
+    if(user.bvn.isVerified){
+      return next(new ErrorHandler("BVN Already verified",403))
     }
 
     const response1 = await axios.post(
@@ -421,9 +434,10 @@ exports.bvn = catchAsyncErrors(async (req, res, next) => {
       }
     );
 
-    user.generateOtp = generateOTP();
+    user.bvn.number = number;
+    user.generatedOtp = generateOTP();
     await user.save();
-    const message = `Your BVN mobile number verification OTP is ${user.generateOtp}...NB: This is only for test purpose`;
+    const message = `Your BVN mobile number verification OTP is ${user.generatedOtp}...NB: This is only for test purpose`;
     res.json({ success: true, data: smsResponse.data, message });
   } catch (error) {
     console.error("Error in bvn:", error);
@@ -441,9 +455,9 @@ exports.bvnNumberVerification = catchAsyncErrors(async (req, res, next) => {
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
-  console.log(user.generateOtp);
+  console.log(user.generatedOtp);
 
-  if (user.generateOtp !== otp) {
+  if (user.generatedOtp !== otp) {
     return next(new ErrorHandler("OTP invalid or has expired", 401));
   }
 

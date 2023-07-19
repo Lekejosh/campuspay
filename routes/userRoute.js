@@ -16,6 +16,7 @@ const {
   updateRoleToStudentOrStaff,
   deleteAccount,
   bvn,
+  bvnNumberVerification,
 } = require("../controllers/userController");
 
 const { isAuthenticatedUser, deactivated } = require("../middlewares/auth");
@@ -47,6 +48,9 @@ router
   .put(isAuthenticatedUser, deactivated, updateRoleToStudentOrStaff);
 
 router.route("/verify/bvn").post(isAuthenticatedUser, deactivated, bvn);
+router
+  .route("/verify/bvn/number")
+  .post(isAuthenticatedUser, deactivated, bvnNumberVerification);
 router
   .route("/account/security/delete")
   .delete(isAuthenticatedUser, deleteAccount);

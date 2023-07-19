@@ -50,7 +50,7 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     gender,
     mobileNumber,
     nationality,
-    transactionPin:1234,
+    transactionPin: 1234,
     generatedOtp: generateOTP(),
     generatedOtpExpire: Date.now() + 15 * 60 * 1000,
   });
@@ -374,19 +374,20 @@ exports.updateRoleToStudentOrStaff = catchAsyncErrors(
   }
 );
 
-//TODO: Wait for sandbox to fix there API before proceeding
-
 exports.bvn = catchAsyncErrors(async (req, res, next) => {
   const { number } = req.body;
-  const user = await User.findById(req.user._id);
-  if (!user) {
-    return next(new ErrorHandler("User not found", 404));
+  if (!number) {
+    return next(new ErrorHandler("BVN number not provided", 422));
   }
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-  await axios
-    .post(
-      `${process.env.BVN_API}bvnr/GetSingleBVN`,
-      { number },
+    const response1 = await axios.post(
+      `${process.env.BVN_API}bvnr/VerifySingleBVN`,
+      "37643632623062303762326637383430170a00eb8149ee3eda479f57de1bebbd66b6996b75da5a46ab6e8ebebebd5e503ad53ad160791a8189b891ad084c786fb71baa1efa03b6d9cc1cf54c8d43f004",
       {
         headers: {
           "Content-Type": "application/json",
@@ -394,12 +395,65 @@ exports.bvn = catchAsyncErrors(async (req, res, next) => {
           Accept: "application/json",
         },
       }
-    )
-    .then((res) => {
-      return res.json(res);
+    );
+
+    await axios.post(`${process.env.BVN_API}bvnr/decrypt`, response1.data, {
+      headers: {
+        "Content-Type": "application/json",
+        "Sandbox-key": process.env.SANDBOX_API_KEY,
+        Accept: "application/json",
+      },
     });
+
+    const smsResponse = await axios.post(
+      `${process.env.BVN_API}v1/africastalking/version1/messaging`,
+      {
+        username: "sandbox",
+        to: "+2348120534617",
+        message: "testing message",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Sandbox-key": process.env.SANDBOX_API_KEY,
+          Accept: "application/json",
+        },
+      }
+    );
+
+    user.generateOtp = generateOTP();
+    await user.save();
+    const message = `Your BVN mobile number verification OTP is ${user.generateOtp}...NB: This is only for test purpose`;
+    res.json({ success: true, data: smsResponse.data, message });
+  } catch (error) {
+    console.error("Error in bvn:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
+exports.bvnNumberVerification = catchAsyncErrors(async (req, res, next) => {
+  const { otp } = req.body;
+  if (!otp) {
+    return next(new ErrorHandler("OTP not provided", 401));
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+  console.log(user.generateOtp);
+
+  if (user.generateOtp !== otp) {
+    return next(new ErrorHandler("OTP invalid or has expired", 401));
+  }
+
+  user.bvn.isVerified = true;
+  await user.save();
+
+  res
+    .status(200)
+    .json({ success: true, message: "Account Verified succefully" });
+});
 exports.deleteAccount = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findById(req.user._id);
 

@@ -86,7 +86,7 @@ exports.deleteWallet = catchAsyncErrors(async (req, res, next) => {
 exports.transferToWallet = catchAsyncErrors(async (req, res, next) => {
   const { from, to, amount, pin } = req.body;
 
-  if (!from || !to || !amount) {
+  if (!from || !to || !amount || !pin) {
     return next(new ErrorHandler("Required parameters not provided", 422));
   }
 
@@ -172,4 +172,24 @@ exports.transferToWallet = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-exports.depositIntoWallet = catchAsyncErrors(async (req, res, next) => {});
+exports.depositIntoWallet = catchAsyncErrors(async (req, res, next) => {
+  const { amount, walletId } = req.body;
+
+  if (!amount || !walletId) {
+    return next(new ErrorHandler("Required Paramater not provided", 422));
+  }
+
+  const wallet = await Wallet.findById(walletId);
+
+  if (!wallet) {
+    return next(new ErrorHandler("Wallet not found", 404));
+  }
+
+  wallet.balance += amount;
+  walletTo.history.push({
+    content: `Deposited ${amount}`,
+  });
+  await wallet.save();
+
+  res.status(200).json({ success: true, wallet });
+});

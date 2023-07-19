@@ -25,7 +25,6 @@ exports.createWallet = catchAsyncErrors(async (req, res, next) => {
 
   const accountNumber = Math.floor(10000000 + Math.random() * 90000000);
 
-
   const formattedAccountNumber = currencyPrefixes[currency] + accountNumber;
 
   const wallet = await Wallet.create({
@@ -105,7 +104,16 @@ exports.transferToWallet = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Required parameters not provided", 422));
   }
 
-  const walletFrom = await Wallet.findOne({accountNumber:from}).populate("userId", "username");
+  if (from === to) {
+    return next(
+      new ErrorHandler("You can't send to, from the same account", 403)
+    );
+  }
+
+  const walletFrom = await Wallet.findOne({ accountNumber: from }).populate(
+    "userId",
+    "username"
+  );
 
   if (!walletFrom) {
     return next(new ErrorHandler("Sender Wallet not found", 404));
@@ -125,7 +133,10 @@ exports.transferToWallet = catchAsyncErrors(async (req, res, next) => {
   }
 
   const user = await User.findById(req.user._id).select("+transactionPin");
-  console.log(user);
+
+  if (!user.transactionPin) {
+    return next(new ErrorHandler("Please Create transaction pin", 400));
+  }
 
   const isPinMatched = await user.compareTransactionPin(pin);
 
@@ -197,7 +208,7 @@ exports.depositIntoWallet = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Required Paramater not provided", 422));
   }
 
-  const wallet = await Wallet.findOne({accountNumber:accountNumber});
+  const wallet = await Wallet.findOne({ accountNumber: accountNumber });
 
   if (!wallet) {
     return next(new ErrorHandler("Wallet not found", 404));
@@ -211,3 +222,85 @@ exports.depositIntoWallet = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({ success: true, wallet });
 });
+
+exports.createTransactionPin = catchAsyncErrors(async (req, res, next) => {
+  const { newPin, confirmNewPin, securityQuestion, securityAnswer } = req.body;
+
+  const pins = ["1234", "4321", "0001", "0000"];
+
+  if (pins.includes(newPin)) {
+    return next(
+      new ErrorHandler("This pins is not allowed, because it guessable", 400)
+    );
+  }
+
+  if (!newPin || !confirmNewPin || !securityQuestion || !securityAnswer) {
+    return next(new ErrorHandler("All Required parameters not provided", 422));
+  }
+
+  if (newPin !== confirmNewPin) {
+    return next(new ErrorHandler("Pin does not match", 401));
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  user.transactionPin = newPin;
+  user.security.question = securityQuestion;
+  user.security.answer = securityAnswer;
+  await user.save();
+
+  res
+    .status(200)
+    .json({ success: true, message: "Transaction pin created successfully" });
+});
+
+exports.getSecurityQuestion = catchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.user._id).select("+security.question");
+
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  if (!user.security.question) {
+    return next(new ErrorHandler("Please create your transaction pin", 400));
+  }
+
+  res.status(200).json({ success: true, data: user.security.question });
+});
+
+exports.changeTransactionPin = catchAsyncErrors(async (req, res, next) => {
+  const { oldPin, newPin, confirmNewPin } = req.body;
+
+  if (!oldPin || !newPin || !confirmNewPin) {
+    return next(new ErrorHandler("All Required Parameters not provided", 422));
+  }
+
+  const user = await User.findById(req.user._id).select("+transactionPin");
+
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  const compareTransactionPin = await user.compareTransactionPin(oldPin);
+
+  if (!compareTransactionPin) {
+    return next(new ErrorHandler("Old Transaction Pin is wrong", 403));
+  }
+
+  if (newPin !== confirmNewPin) {
+    return next(new ErrorHandler("New Pin does not match", 403));
+  }
+
+  user.transactionPin = newPin;
+  await user.save();
+
+  res.status(200).json({ success: true, message: "Pin Changed Succefully" });
+});
+
+// exports.resetTransactionPin = catchAsyncErrors(async (req, res, next) => {
+//   const {} = req.body;
+// });

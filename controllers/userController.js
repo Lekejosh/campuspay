@@ -50,7 +50,6 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     gender,
     mobileNumber,
     nationality,
-    transactionPin: 1234,
     generatedOtp: generateOTP(),
     generatedOtpExpire: Date.now() + 15 * 60 * 1000,
   });
@@ -389,13 +388,13 @@ exports.bvn = catchAsyncErrors(async (req, res, next) => {
         new ErrorHandler("This BVN is already used by another User", 409)
       );
     }
-    const user = await User.findById(req.user._id)
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if(user.bvn.isVerified){
-      return next(new ErrorHandler("BVN Already verified",403))
+    if (user.bvn.isVerified) {
+      return next(new ErrorHandler("BVN Already verified", 403));
     }
 
     const response1 = await axios.post(

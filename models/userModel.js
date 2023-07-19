@@ -85,6 +85,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: [4, "Pin cannot be less than 4 Numbers"],
     },
+    security: {
+      question: {
+        type: String,
+        select: false,
+      },
+      answer: {
+        type: String,
+        select: false,
+      },
+    },
     generatedOtp: String,
     generatedOtpExpire: Date,
     resetPasswordToken: String,

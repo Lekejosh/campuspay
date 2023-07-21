@@ -7,8 +7,15 @@ const ErrorHandler = require("../utils/errorHandler");
 const Notification = require("../models/notificationModel");
 
 exports.createPost = catchAsyncErrors(async (req, res, next) => {
-  const { description, price, pickup, shipping, location, isNegotiatable } =
-    req.body;
+  const {
+    description,
+    price,
+    pickup,
+    shipping,
+    location,
+    isNegotiatable,
+    category,
+  } = req.body;
 
   const images = [];
 
@@ -29,6 +36,7 @@ exports.createPost = catchAsyncErrors(async (req, res, next) => {
     price,
     pickup,
     shipping,
+    category,
     location,
     isNegotiatable,
     author: req.user._id,
@@ -40,7 +48,7 @@ exports.createPost = catchAsyncErrors(async (req, res, next) => {
 exports.getPost = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId || postId === ':postId')
+  if (!postId || postId === ":postId")
     return next(new ErrorHandler("Post Id not specified", 422));
 
   const post = await Post.findById(postId);
@@ -55,7 +63,7 @@ exports.getPost = catchAsyncErrors(async (req, res, next) => {
 exports.deletePost = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId || postId === ':postId')
+  if (!postId || postId === ":postId")
     return next(new ErrorHandler("Post Id not specified", 422));
 
   const post = await Post.findById(postId);
@@ -136,7 +144,7 @@ exports.likePost = catchAsyncErrors(async (req, res, next) => {
 exports.unlikePost = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId || postId === ':postId')
+  if (!postId || postId === ":postId")
     return next(new ErrorHandler("Post Id not specified", 422));
 
   const post = await Post.findById(postId);
@@ -160,7 +168,7 @@ exports.unlikePost = catchAsyncErrors(async (req, res, next) => {
 exports.createPostReview = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId || postId === ':postId')
+  if (!postId || postId === ":postId")
     return next(new ErrorHandler("Post Id not specified", 422));
   const { rating, comment } = req.body;
 
@@ -214,7 +222,7 @@ exports.createPostReview = catchAsyncErrors(async (req, res, next) => {
 exports.getPostReviews = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
 
-  if (!postId || postId === ':postId')
+  if (!postId || postId === ":postId")
     return next(new ErrorHandler("Post Id not specified", 422));
   const post = await Post.findById(postId);
 
@@ -231,7 +239,7 @@ exports.getPostReviews = catchAsyncErrors(async (req, res, next) => {
 exports.deletePostReview = catchAsyncErrors(async (req, res, next) => {
   const postId = req.params.postId;
   const reviewId = req.query.review;
-  if (!postId || postId === ':postId')
+  if (!postId || postId === ":postId")
     return next(new ErrorHandler("Post Id not specified", 422));
 
   const post = await Post.findById(postId);
@@ -269,4 +277,16 @@ exports.deletePostReview = catchAsyncErrors(async (req, res, next) => {
     success: true,
     message: "Review Deleted Successfully",
   });
+});
+
+exports.seearchPostByCategory = catchAsyncErrors(async (req, res, next) => {
+  const { type } = req.query;
+
+  if (!type) {
+    return next(new ErrorHandler("Category not specified", 422));
+  }
+
+  const post = await Post.find({ category: type });
+
+  res.status(200).json({ success: true, post });
 });

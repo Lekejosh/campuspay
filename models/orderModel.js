@@ -23,7 +23,7 @@ const orderSchema = new mongoose.Schema(
       },
       refrence: String,
     },
-    items: [
+    items: 
       {
         seller: {
           type: String,
@@ -48,7 +48,6 @@ const orderSchema = new mongoose.Schema(
           },
         },
       },
-    ],
     amount: {
       type: Number,
     },

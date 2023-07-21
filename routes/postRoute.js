@@ -11,9 +11,14 @@ const {
   createPostReview,
   getPostReviews,
   deletePostReview,
+  seearchPostByCategory,
 } = require("../controllers/postController");
 
-const { isAuthenticatedUser, authorizeRole } = require("../middlewares/auth");
+const {
+  isAuthenticatedUser,
+  authorizeRole,
+  deactivated,
+} = require("../middlewares/auth");
 
 router
   .route("/")
@@ -38,5 +43,9 @@ router
   .put(isAuthenticatedUser, createPostReview)
   .get((isAuthenticatedUser, getPostReviews))
   .delete(isAuthenticatedUser, deletePostReview);
+
+router
+  .route("/search/category")
+  .get(isAuthenticatedUser, deactivated, seearchPostByCategory);
 
 module.exports = router;

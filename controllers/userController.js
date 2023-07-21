@@ -41,6 +41,10 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler(error, 409));
   }
 
+  const accountNumber = Math.floor(10000000 + Math.random() * 90000000);
+
+  const formattedAccountNumber = "10" + accountNumber;
+
   const user = await User.create({
     fullName,
     email,
@@ -50,6 +54,7 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     gender,
     mobileNumber,
     nationality,
+    mainAccount: formattedAccountNumber,
     generatedOtp: generateOTP(),
     generatedOtpExpire: Date.now() + 15 * 60 * 1000,
   });

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const notificationSchema = new mongoose.Schema(
+const cardSchema = new mongoose.Schema(
   {
     _id: {
       type: String,
@@ -9,23 +9,20 @@ const notificationSchema = new mongoose.Schema(
         return require("uuid").v4();
       },
     },
-    type: {
-      type: String,
-      enum: ["like", "comment", "mention", "order","wallet","request"],
-    },
-    typeId: {
-      type: String,
-    },
-    content: {
-      type: String,
-    },
-    isRead: {
-      type: Boolean,
-      default: false,
-    },
-    userId: {
+    user: {
       type: String,
       ref: "User",
+    },
+    cardNumber: {
+      type: String,
+      unique: true,
+    },
+    cardType: {
+      type: String,
+      enum: ["masterCard", "visa"],
+    },
+    expiryDate: {
+      type: String,
     },
   },
   {
@@ -33,4 +30,4 @@ const notificationSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Notification", notificationSchema);
+module.exports = mongoose.model("Card", cardSchema);

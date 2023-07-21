@@ -85,6 +85,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: [4, "Pin cannot be less than 4 Numbers"],
     },
+    mainAccount: {
+      type: String,
+    },
+    mainBalance: {
+      type: Number,
+      default: 0,
+    },
     security: {
       question: {
         type: String,

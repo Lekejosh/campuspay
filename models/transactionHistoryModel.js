@@ -15,6 +15,13 @@ const transactionHistorySchema = new mongoose.Schema(
     content: {
       type: String,
     },
+    type:{
+      type:String,
+      enum:['debit','credit','request','create','delete','deposit','withdrawal']
+    },
+    description:{
+      type:String
+    }
   },
   { timestamps: true }
 );

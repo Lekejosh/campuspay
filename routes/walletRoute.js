@@ -10,6 +10,10 @@ const {
   changeTransactionPin,
   createTransactionPin,
   getSecurityQuestion,
+  requestPayment,
+  withdrawMoney,
+  depositIntoMainAccount,
+  payForOrder,
 } = require("../controllers/walletController");
 const { isAuthenticatedUser, deactivated } = require("../middlewares/auth");
 
@@ -21,10 +25,15 @@ router
 router
   .route("/deposit")
   .post(isAuthenticatedUser, deactivated, depositIntoWallet);
+router
+  .route("/deposit/main")
+  .post(isAuthenticatedUser, deactivated, depositIntoMainAccount);
+router.route("/withdraw").post(isAuthenticatedUser, deactivated, withdrawMoney);
 router.route("/").get(isAuthenticatedUser, deactivated, getAllWallet);
 router
   .route("/transfer")
   .post(isAuthenticatedUser, deactivated, transferToWallet);
+router.route("/request").post(isAuthenticatedUser, deactivated, requestPayment);
 router
   .route("/transaction-pin/change")
   .put(isAuthenticatedUser, deactivated, changeTransactionPin);
@@ -34,5 +43,6 @@ router
 router
   .route("/transaction-pin/security")
   .get(isAuthenticatedUser, deactivated, getSecurityQuestion);
+router.route("/order/pay").post(isAuthenticatedUser, deactivated, payForOrder);
 
 module.exports = router;

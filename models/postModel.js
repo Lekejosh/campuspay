@@ -17,6 +17,10 @@ const postSchema = new mongoose.Schema({
     type: String,
     maxLength: [1000, "Description can't be more than 1000 Characters"],
   },
+  category: {
+    type: String,
+    enum: ["food", "service", "product"],
+  },
   price: {
     type: Number,
   },
@@ -74,15 +78,14 @@ const postSchema = new mongoose.Schema({
   location: {
     type: String,
   },
-  author:{
-    type:String,
-    ref:"User"
+  author: {
+    type: String,
+    ref: "User",
   },
-  isNegotiatable:{
-    type:Boolean,
-    default:false
-  }
+  isNegotiatable: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-
-module.exports = mongoose.model("Post",postSchema)
+module.exports = mongoose.model("Post", postSchema);

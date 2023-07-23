@@ -279,14 +279,24 @@ exports.deletePostReview = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-exports.seearchPostByCategory = catchAsyncErrors(async (req, res, next) => {
-  const { type } = req.query;
+exports.searchPostByCategory = catchAsyncErrors(async (req, res, next) => {
+  const { type, minPrice, maxPrice } = req.query;
 
   if (!type) {
     return next(new ErrorHandler("Category not specified", 422));
   }
 
-  const post = await Post.find({ category: type });
+  let query = { category: type };
+
+  if (minPrice && maxPrice) {
+    query.price = { $gte: parseFloat(minPrice), $lte: parseFloat(maxPrice) };
+  } else if (minPrice) {
+    query.price = { $gte: parseFloat(minPrice) };
+  } else if (maxPrice) {
+    query.price = { $lte: parseFloat(maxPrice) };
+  }
+
+  const post = await Post.find(query);
 
   res.status(200).json({ success: true, post });
 });

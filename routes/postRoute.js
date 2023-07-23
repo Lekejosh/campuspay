@@ -11,7 +11,7 @@ const {
   createPostReview,
   getPostReviews,
   deletePostReview,
-  seearchPostByCategory,
+  searchPostByCategory,
 } = require("../controllers/postController");
 
 const {
@@ -46,6 +46,6 @@ router
 
 router
   .route("/search/category")
-  .get(isAuthenticatedUser, deactivated, seearchPostByCategory);
+  .get(isAuthenticatedUser, deactivated, searchPostByCategory);
 
 module.exports = router;
